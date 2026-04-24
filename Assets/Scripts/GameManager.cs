@@ -18,23 +18,24 @@ public class GameManager : MonoBehaviour
     public float health = 100f;
 
     [Header("Food")]
+    [Tooltip("Satiation bar (0 = starving, maxFood = full). Drains over time; pickups refill it.")]
     [Min(0f)]
     public float maxFood = 100f;
     [Min(0f)]
     public float food = 100f;
-    [Tooltip("Food lost per second.")]
+    [Tooltip("Food bar lost per second.")]
     [Min(0f)]
     public float foodDrainPerSecond = 1f;
-    [Tooltip("If food is 0, health lost per second.")]
+    [Tooltip("If food is 0, health lost per second (starvation).")]
     [Min(0f)]
     public float starvationDamagePerSecond = 2f;
 
-    [Header("Healing")]
+    [Header("Healing (F)")]
     public KeyCode healKey = KeyCode.F;
     [Min(0)]
     public int healFoodCost = 10;
     [Min(0f)]
-    public float healAmount = 20f;
+    public float healAmount = 5f;
 
     [Header("UI")]
     public TextMeshProUGUI woodText;
@@ -74,13 +75,11 @@ public class GameManager : MonoBehaviour
     {
         if (hasWon || hasLost) return;
 
-        // Hunger tick
         if (foodDrainPerSecond > 0f)
         {
             food = Mathf.Clamp(food - (foodDrainPerSecond * Time.deltaTime), 0f, maxFood);
         }
 
-        // Starvation damage
         if (food <= 0f && starvationDamagePerSecond > 0f)
         {
             TakeDamage(starvationDamagePerSecond * Time.deltaTime);
@@ -113,6 +112,15 @@ public class GameManager : MonoBehaviour
     {
         if (hasWon || hasLost) return;
         food = Mathf.Clamp(food + Mathf.Max(0f, amount), 0f, maxFood);
+        UpdateUI();
+    }
+
+    /// <summary>Food pickups: refill food bar and heal immediately (one UpdateUI).</summary>
+    public void ApplyFoodPickup(float foodGain, float healthGain)
+    {
+        if (hasWon || hasLost) return;
+        food = Mathf.Clamp(food + Mathf.Max(0f, foodGain), 0f, maxFood);
+        health = Mathf.Clamp(health + Mathf.Max(0f, healthGain), 0f, maxHealth);
         UpdateUI();
     }
 
@@ -243,7 +251,7 @@ public class GameManager : MonoBehaviour
         }
 
         Heal(healAmount);
-        SetFeedback($"+{Mathf.CeilToInt(healAmount)} HP (cost {healFoodCost} food)");
+        SetFeedback($"+{Mathf.RoundToInt(healAmount)} HP (cost {healFoodCost} food)");
     }
 
     void Die()

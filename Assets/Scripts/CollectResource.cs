@@ -9,6 +9,8 @@ public class CollectResource : MonoBehaviour
 
     [FormerlySerializedAs("woodValue")]
     public int resourceValue = 1;
+    [Tooltip("For Food pickups: HP restored. If < 0, uses resourceValue (same as food gained).")]
+    public float foodHealOverride = -1f;
     public KeyCode collectKey = KeyCode.E;
     public string playerTag = "Player";
     [Tooltip("How close the player must be to collect (arm's reach).")]
@@ -100,9 +102,12 @@ public class CollectResource : MonoBehaviour
                 GameManager.instance.SetFeedback($"Collected +{v} rope");
                 break;
             case ResourceType.Food:
-                GameManager.instance.AddFood(v);
-                GameManager.instance.SetFeedback($"Collected +{v} food");
+            {
+                float hp = foodHealOverride < 0f ? v : foodHealOverride;
+                GameManager.instance.ApplyFoodPickup(v, hp);
+                GameManager.instance.SetFeedback($"+{v} food, +{Mathf.RoundToInt(hp)} HP");
                 break;
+            }
         }
     }
 }

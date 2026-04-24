@@ -94,7 +94,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::CollectResource
   resourceType: 1
-  resourceValue: 1
+  resourceValue: 5
+  foodHealOverride: 5
   collectKey: 101
   playerTag: Player
   interactionDistance: 2.25
