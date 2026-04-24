@@ -71,6 +71,9 @@ public class BuildRaft : MonoBehaviour
                 GameManager.instance.AddRaftProgress(progressPerBuild);
                 GameManager.instance.SetFeedback("Built raft!");
 
+                if (GameAudio.Instance != null)
+                    GameAudio.Instance.PlayBuildRaft();
+
                 if (buildEffect != null)
                 {
                     ParticleSystem fx = Instantiate(buildEffect, transform.position, Quaternion.identity);

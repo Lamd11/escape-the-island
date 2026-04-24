@@ -7,6 +7,11 @@ public class PlayerMovement : MonoBehaviour
     [Tooltip("Freeze rigidbody rotation so physics doesn't tip the player over.")]
     public bool freezeRotation = true;
 
+    [Header("Audio")]
+    [Tooltip("Time between footsteps while moving.")]
+    public float footstepInterval = 0.42f;
+    float footstepCooldown;
+
     Rigidbody rb;
     Vector3 moveInput;
 
@@ -17,6 +22,23 @@ public class PlayerMovement : MonoBehaviour
 
         moveInput = new Vector3(h, 0f, v);
         if (moveInput.sqrMagnitude > 1f) moveInput.Normalize();
+
+        if (footstepInterval > 0f && GameAudio.Instance != null)
+        {
+            if (moveInput.sqrMagnitude > 0.02f)
+            {
+                footstepCooldown -= Time.deltaTime;
+                if (footstepCooldown <= 0f)
+                {
+                    GameAudio.Instance.PlayPlayerFootstep();
+                    footstepCooldown = footstepInterval;
+                }
+            }
+            else
+            {
+                footstepCooldown = footstepInterval;
+            }
+        }
     }
 
     void Awake()

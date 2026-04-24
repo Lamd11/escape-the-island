@@ -82,7 +82,7 @@ public class GameManager : MonoBehaviour
 
         if (food <= 0f && starvationDamagePerSecond > 0f)
         {
-            TakeDamage(starvationDamagePerSecond * Time.deltaTime);
+            TakeDamage(starvationDamagePerSecond * Time.deltaTime, playHitSfx: false);
         }
 
         // Healing
@@ -205,11 +205,13 @@ public class GameManager : MonoBehaviour
         if (healthText != null) healthText.text = "HP: " + Mathf.CeilToInt(health);
     }
 
-    public void TakeDamage(float amount)
+    public void TakeDamage(float amount, bool playHitSfx = false)
     {
         if (hasWon || hasLost) return;
 
         health = Mathf.Clamp(health - Mathf.Max(0f, amount), 0f, maxHealth);
+        if (playHitSfx && amount > 0f && GameAudio.Instance != null)
+            GameAudio.Instance.PlayPlayerHit();
         UpdateUI();
 
         if (health <= 0f)
@@ -258,6 +260,9 @@ public class GameManager : MonoBehaviour
     {
         if (hasLost) return;
         hasLost = true;
+
+        if (GameAudio.Instance != null)
+            GameAudio.Instance.PlayDeathMusic();
 
         TryAutoWireUI();
         if (deathText != null)
@@ -328,6 +333,9 @@ public class GameManager : MonoBehaviour
     {
         if (hasWon) return;
         hasWon = true;
+
+        if (GameAudio.Instance != null)
+            GameAudio.Instance.PlayVictoryMusic();
 
         TryAutoWireUI();
         if (winText != null)

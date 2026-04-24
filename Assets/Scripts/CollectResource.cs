@@ -96,16 +96,19 @@ public class CollectResource : MonoBehaviour
             case ResourceType.Wood:
                 GameManager.instance.AddWood(v);
                 GameManager.instance.SetFeedback($"Collected +{v} wood");
+                if (GameAudio.Instance != null) GameAudio.Instance.PlayCollectWood();
                 break;
             case ResourceType.Rope:
                 GameManager.instance.AddRope(v);
                 GameManager.instance.SetFeedback($"Collected +{v} rope");
+                if (GameAudio.Instance != null) GameAudio.Instance.PlayCollectRope();
                 break;
             case ResourceType.Food:
             {
                 float hp = foodHealOverride < 0f ? v : foodHealOverride;
                 GameManager.instance.ApplyFoodPickup(v, hp);
                 GameManager.instance.SetFeedback($"+{v} food, +{Mathf.RoundToInt(hp)} HP");
+                if (GameAudio.Instance != null) GameAudio.Instance.PlayCollectFood();
                 break;
             }
         }
