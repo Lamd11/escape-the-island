@@ -10,13 +10,20 @@ public class GameManager : MonoBehaviour
     [Range(0, 100)]
     public int raftProgress = 0;
     public bool hasWon = false;
+    public bool hasLost = false;
+
+    [Header("Health")]
+    public float maxHealth = 100f;
+    public float health = 100f;
 
     [Header("UI")]
     public TextMeshProUGUI woodText;
     public TextMeshProUGUI raftText;
+    public TextMeshProUGUI healthText;
     public TextMeshProUGUI feedbackText;
     public TextMeshProUGUI buildRequirementText;
     public TextMeshProUGUI winText;
+    public TextMeshProUGUI deathText;
 
     [Header("Player (assign in Inspector)")]
     public MonoBehaviour playerMovementScript;
@@ -34,20 +41,22 @@ public class GameManager : MonoBehaviour
 
     void Start()
     {
+        health = Mathf.Clamp(health, 0f, maxHealth);
         if (winText != null) winText.gameObject.SetActive(false);
+        if (deathText != null) deathText.gameObject.SetActive(false);
         UpdateUI();
     }
 
     public void AddWood(int amount)
     {
-        if (hasWon) return;
+        if (hasWon || hasLost) return;
         wood += Mathf.Max(0, amount);
         UpdateUI();
     }
 
     public bool TrySpendWood(int amount)
     {
-        if (hasWon) return false;
+        if (hasWon || hasLost) return false;
 
         int cost = Mathf.Max(0, amount);
         if (wood < cost) return false;
@@ -59,7 +68,7 @@ public class GameManager : MonoBehaviour
 
     public void AddRaftProgress(int amount)
     {
-        if (hasWon) return;
+        if (hasWon || hasLost) return;
 
         raftProgress = Mathf.Clamp(raftProgress + amount, 0, 100);
         UpdateUI();
@@ -95,6 +104,41 @@ public class GameManager : MonoBehaviour
         TryAutoWireUI();
         if (woodText != null) woodText.text = "Wood: " + wood;
         if (raftText != null) raftText.text = "Raft: " + raftProgress + "%";
+        if (healthText != null) healthText.text = "HP: " + Mathf.CeilToInt(health);
+    }
+
+    public void TakeDamage(float amount)
+    {
+        if (hasWon || hasLost) return;
+
+        health = Mathf.Clamp(health - Mathf.Max(0f, amount), 0f, maxHealth);
+        UpdateUI();
+
+        if (health <= 0f)
+        {
+            Die();
+        }
+    }
+
+    void Die()
+    {
+        if (hasLost) return;
+        hasLost = true;
+
+        TryAutoWireUI();
+        if (deathText != null)
+        {
+            deathText.text = "You Died";
+            deathText.gameObject.SetActive(true);
+        }
+
+        SetFeedback("");
+        SetBuildRequirement("");
+
+        if (playerMovementScript != null)
+        {
+            playerMovementScript.enabled = false;
+        }
     }
 
     void TryAutoWireUI()
@@ -123,6 +167,16 @@ public class GameManager : MonoBehaviour
         {
             GameObject go = GameObject.Find("WinText");
             if (go != null) winText = go.GetComponent<TextMeshProUGUI>();
+        }
+        if (deathText == null)
+        {
+            GameObject go = GameObject.Find("DeathText");
+            if (go != null) deathText = go.GetComponent<TextMeshProUGUI>();
+        }
+        if (healthText == null)
+        {
+            GameObject go = GameObject.Find("HealthText");
+            if (go != null) healthText = go.GetComponent<TextMeshProUGUI>();
         }
     }
 
