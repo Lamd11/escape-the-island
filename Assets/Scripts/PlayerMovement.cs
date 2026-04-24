@@ -12,6 +12,18 @@ public class PlayerMovement : MonoBehaviour
     public float footstepInterval = 0.42f;
     float footstepCooldown;
 
+    [Header("Island bounds (no swimming)")]
+    [Tooltip("Clamp XZ so the player cannot walk off the island into the ocean.")]
+    public bool constrainToIsland = true;
+    [Tooltip("Optional: assign an empty at island center. If null, uses world origin.")]
+    public Transform islandCenter;
+    [Tooltip("Half-width (X) and half-depth (Z) of playable area from center.")]
+    public Vector2 islandHalfExtentsXZ = new Vector2(52f, 52f);
+    [Tooltip("If Y drops below this (fell in water / off mesh), snap back to safe land height.")]
+    public float seaLevelY = 0.35f;
+    [Tooltip("Y position used when recovering from sea / void.")]
+    public float safeLandY = 1.5f;
+
     Rigidbody rb;
     Vector3 moveInput;
 
@@ -54,6 +66,26 @@ public class PlayerMovement : MonoBehaviour
     void FixedUpdate()
     {
         Vector3 delta = moveInput * (speed * Time.fixedDeltaTime);
-        rb.MovePosition(rb.position + delta);
+        Vector3 next = rb.position + delta;
+        if (constrainToIsland)
+            next = ClampToIsland(next);
+        rb.MovePosition(next);
+    }
+
+    Vector3 ClampToIsland(Vector3 p)
+    {
+        Vector3 c = islandCenter != null ? islandCenter.position : Vector3.zero;
+        p.x = Mathf.Clamp(p.x, c.x - islandHalfExtentsXZ.x, c.x + islandHalfExtentsXZ.x);
+        p.z = Mathf.Clamp(p.z, c.z - islandHalfExtentsXZ.y, c.z + islandHalfExtentsXZ.y);
+
+        if (p.y < seaLevelY)
+        {
+            p.y = safeLandY;
+            Vector3 v = rb.linearVelocity;
+            v.y = 0f;
+            rb.linearVelocity = v;
+        }
+
+        return p;
     }
 }

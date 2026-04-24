@@ -3,7 +3,8 @@
 public class EnemyFollow : MonoBehaviour
 {
     public Transform player;
-    public float speed = 3f;
+    [Tooltip("Slightly faster than PlayerMovement.speed (default 5) so night chases are threatening.")]
+    public float speed = 7.5f;
     [Header("Attack")]
     public float attackRange = 1.6f;
     [Tooltip("Damage per second target; actual damage is applied per swing.")]
