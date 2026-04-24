@@ -5,24 +5,22 @@ public class CollectResource : MonoBehaviour
     public int woodValue = 1;
     public KeyCode collectKey = KeyCode.E;
     public string playerTag = "Player";
-    bool playerInRange = false;
-    Collider playerInRangeCollider;
+    [Tooltip("How close the player must be to collect (arm's reach).")]
+    public float interactionDistance = 2.25f;
+    Transform playerTransform;
+    bool promptVisible = false;
     public ParticleSystem collectEffect;
     public string playerCollectAnimatorTrigger = "Chop";
     Animator cachedPlayerAnimator;
 
-    void OnTriggerEnter(Collider other)
+    void Start()
     {
-        if (!other.CompareTag(playerTag)) return;
-        if (GameManager.instance == null) return;
-
-        playerInRange = true;
-        playerInRangeCollider = other;
-        if (cachedPlayerAnimator == null)
+        GameObject player = GameObject.FindGameObjectWithTag(playerTag);
+        if (player != null)
         {
-            cachedPlayerAnimator = other.GetComponentInChildren<Animator>();
+            playerTransform = player.transform;
+            cachedPlayerAnimator = player.GetComponentInChildren<Animator>();
         }
-        GameManager.instance.SetFeedback($"Press {collectKey} to collect wood (+{woodValue})");
     }
 
     void Update()
@@ -30,7 +28,35 @@ public class CollectResource : MonoBehaviour
         if (GameManager.instance == null) return;
         if (GameManager.instance.hasWon) return;
 
-        if (!playerInRange) return;
+        if (playerTransform == null)
+        {
+            GameObject player = GameObject.FindGameObjectWithTag(playerTag);
+            if (player != null)
+            {
+                playerTransform = player.transform;
+                cachedPlayerAnimator = player.GetComponentInChildren<Animator>();
+            }
+            else
+            {
+                return;
+            }
+        }
+
+        float distance = Vector3.Distance(playerTransform.position, transform.position);
+        bool inReach = distance <= interactionDistance;
+
+        if (inReach && !promptVisible)
+        {
+            promptVisible = true;
+            GameManager.instance.SetFeedback($"Press {collectKey} to collect wood (+{woodValue})");
+        }
+        else if (!inReach && promptVisible)
+        {
+            promptVisible = false;
+            GameManager.instance.SetFeedback("");
+        }
+
+        if (!inReach) return;
 
         if (Input.GetKeyDown(collectKey))
         {
@@ -51,18 +77,5 @@ public class CollectResource : MonoBehaviour
 
             Destroy(gameObject);
         }
-    }
-
-    void OnTriggerExit(Collider other)
-    {
-        if (!other.CompareTag(playerTag)) return;
-        if (GameManager.instance == null) return;
-
-        if (playerInRangeCollider == other)
-        {
-            playerInRange = false;
-            playerInRangeCollider = null;
-        }
-        GameManager.instance.SetFeedback("");
     }
 }

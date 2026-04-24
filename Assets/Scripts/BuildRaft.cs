@@ -9,33 +9,54 @@ public class BuildRaft : MonoBehaviour
     public ParticleSystem buildEffect;
     public string playerBuildAnimatorTrigger = "Build";
     Animator cachedPlayerAnimator;
-    bool playerInRange = false;
+    public string playerTag = "Player";
     Transform playerTransform;
+    bool promptVisible = false;
 
-    void OnTriggerEnter(Collider other)
+    void Start()
     {
-        if (!other.CompareTag("Player")) return;
-        if (GameManager.instance == null) return;
-
-        playerInRange = true;
-        playerTransform = other.transform;
-        cachedPlayerAnimator = other.GetComponentInChildren<Animator>();
-        GameManager.instance.SetBuildRequirement($"Press E to build raft ({woodCost} wood)");
-        GameManager.instance.SetFeedback("");
+        GameObject player = GameObject.FindGameObjectWithTag(playerTag);
+        if (player != null)
+        {
+            playerTransform = player.transform;
+            cachedPlayerAnimator = player.GetComponentInChildren<Animator>();
+        }
     }
 
     void Update()
     {
         if (GameManager.instance == null) return;
         if (GameManager.instance.hasWon) return;
-        if (!playerInRange) return;
-        if (playerTransform == null) return;
+        if (playerTransform == null)
+        {
+            GameObject player = GameObject.FindGameObjectWithTag(playerTag);
+            if (player != null)
+            {
+                playerTransform = player.transform;
+                cachedPlayerAnimator = player.GetComponentInChildren<Animator>();
+            }
+            else
+            {
+                return;
+            }
+        }
 
         float distance = Vector3.Distance(playerTransform.position, transform.position);
-        if (distance > interactionDistance)
+        bool inReach = distance <= interactionDistance;
+
+        if (inReach && !promptVisible)
         {
-            return;
+            promptVisible = true;
+            GameManager.instance.SetBuildRequirement($"Press E to build raft ({woodCost} wood)");
         }
+        else if (!inReach && promptVisible)
+        {
+            promptVisible = false;
+            GameManager.instance.SetBuildRequirement("");
+            GameManager.instance.SetFeedback("");
+        }
+
+        if (!inReach) return;
 
         if (Input.GetKeyDown(KeyCode.E))
         {
@@ -61,19 +82,5 @@ public class BuildRaft : MonoBehaviour
                 GameManager.instance.SetFeedback($"Not enough wood ({GameManager.instance.wood}/{woodCost})");
             }
         }
-    }
-
-    void OnTriggerExit(Collider other)
-    {
-        if (!other.CompareTag("Player")) return;
-        if (GameManager.instance == null) return;
-
-        if (other.transform == playerTransform)
-        {
-            playerInRange = false;
-            playerTransform = null;
-        }
-        GameManager.instance.SetBuildRequirement("");
-        GameManager.instance.SetFeedback("");
     }
 }
