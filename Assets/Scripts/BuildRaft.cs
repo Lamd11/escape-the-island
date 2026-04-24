@@ -3,6 +3,7 @@
 public class BuildRaft : MonoBehaviour
 {
     public int woodCost = 3;
+    public int ropeCost = 2;
     public int progressPerBuild = 10;
     [Tooltip("How close the player must be to build (arm's reach).")]
     public float interactionDistance = 2.25f;
@@ -47,7 +48,7 @@ public class BuildRaft : MonoBehaviour
         if (inReach && !promptVisible)
         {
             promptVisible = true;
-            GameManager.instance.SetBuildRequirement($"Press E to build raft ({woodCost} wood)");
+            GameManager.instance.SetBuildRequirement($"Press E to build raft ({woodCost} wood, {ropeCost} rope)");
         }
         else if (!inReach && promptVisible)
         {
@@ -60,7 +61,7 @@ public class BuildRaft : MonoBehaviour
 
         if (Input.GetKeyDown(KeyCode.E))
         {
-            if (GameManager.instance.TrySpendWood(woodCost))
+            if (GameManager.instance.TrySpendForRaft(woodCost, ropeCost))
             {
                 if (cachedPlayerAnimator != null && !string.IsNullOrWhiteSpace(playerBuildAnimatorTrigger))
                 {
@@ -79,7 +80,15 @@ public class BuildRaft : MonoBehaviour
             }
             else
             {
-                GameManager.instance.SetFeedback($"Not enough wood ({GameManager.instance.wood}/{woodCost})");
+                int missingWood = Mathf.Max(0, woodCost - GameManager.instance.wood);
+                int missingRope = Mathf.Max(0, ropeCost - GameManager.instance.rope);
+
+                if (missingWood > 0 && missingRope > 0)
+                    GameManager.instance.SetFeedback($"Missing resources: {missingWood} wood, {missingRope} rope");
+                else if (missingWood > 0)
+                    GameManager.instance.SetFeedback($"Not enough wood ({GameManager.instance.wood}/{woodCost})");
+                else
+                    GameManager.instance.SetFeedback($"Not enough rope ({GameManager.instance.rope}/{ropeCost})");
             }
         }
     }

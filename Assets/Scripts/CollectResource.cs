@@ -1,8 +1,14 @@
 using UnityEngine;
+using UnityEngine.Serialization;
 
 public class CollectResource : MonoBehaviour
 {
-    public int woodValue = 1;
+    public enum ResourceType { Wood, Food, Rope }
+
+    public ResourceType resourceType = ResourceType.Wood;
+
+    [FormerlySerializedAs("woodValue")]
+    public int resourceValue = 1;
     public KeyCode collectKey = KeyCode.E;
     public string playerTag = "Player";
     [Tooltip("How close the player must be to collect (arm's reach).")]
@@ -48,7 +54,7 @@ public class CollectResource : MonoBehaviour
         if (inReach && !promptVisible)
         {
             promptVisible = true;
-            GameManager.instance.SetFeedback($"Press {collectKey} to collect wood (+{woodValue})");
+            GameManager.instance.SetFeedback($"Press {collectKey} to collect {resourceType.ToString().ToLower()} (+{resourceValue})");
         }
         else if (!inReach && promptVisible)
         {
@@ -65,8 +71,7 @@ public class CollectResource : MonoBehaviour
                 cachedPlayerAnimator.SetTrigger(playerCollectAnimatorTrigger);
             }
 
-            GameManager.instance.AddWood(woodValue);
-            GameManager.instance.SetFeedback($"Collected +{woodValue} wood");
+            Collect();
 
             if (collectEffect != null)
             {
@@ -76,6 +81,28 @@ public class CollectResource : MonoBehaviour
             }
 
             Destroy(gameObject);
+        }
+    }
+
+    void Collect()
+    {
+        if (GameManager.instance == null) return;
+
+        int v = Mathf.Max(0, resourceValue);
+        switch (resourceType)
+        {
+            case ResourceType.Wood:
+                GameManager.instance.AddWood(v);
+                GameManager.instance.SetFeedback($"Collected +{v} wood");
+                break;
+            case ResourceType.Rope:
+                GameManager.instance.AddRope(v);
+                GameManager.instance.SetFeedback($"Collected +{v} rope");
+                break;
+            case ResourceType.Food:
+                GameManager.instance.AddFood(v);
+                GameManager.instance.SetFeedback($"Collected +{v} food");
+                break;
         }
     }
 }
